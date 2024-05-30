@@ -14,7 +14,7 @@ The script searches for the `default` VPC in the specified AWS Region and uses t
 
 ### Demo stack
 
-This stack was was developed and verified using AWS EKS running Kubernetes 1.29, Upbound Crossplane AWS providers v1.4.0 on a laptop running Ubuntu 24.04. The `bash` version was 5.2.21. 
+This stack was was developed and verified using AWS EKS running Kubernetes 1.29, Upbound Crossplane AWS providers v1.4.0 on a laptop running Ubuntu 24.04. The bash version was 5.2.21. 
 
 Manifests for the demo stack are created using the bash script `create_stack.sh`, using the currently active AWS credentials. These manifests can then be deployed to provision the demo stack.
 
@@ -55,19 +55,19 @@ ACL object definitions can be 'empty' - as in without any users - but cannot ref
 There is a option to save a connection secret here also, but nothing happens so this too appears to be a work in progress.
 
 **7**\
-Clusters do not have to have security groups, subnet groups, parameter groups or ACLs - default subnet groups, parameter groups and ACLs will be used if these are not defined while the cluster will be created without a security group; what will cause errors is referring to non-existent objects.
+Clusters do not need to have security groups, subnet groups, parameter groups or ACLs defined - default subnet groups, parameter groups and ACLs will be used if these are not defined while the cluster will be created without a security group; what will cause errors during reconciliation is referring to non-existent objects.
 
-The default ACL is called `openAccess`, which is probably not a good idea, even in a devolopment environment.
+The default ACL is called `openAccess` and provides unrestricted access, which is probably not a good idea even in a devolopment environment.
 
 The cluster endpoint and ARN values are stored as key/value fields in the status section of the Crossplane Cluster object so will need to be extracted using e.g. `kubectl` and `jq`.
 
-This is another place where it feels a little unfinished - for example RDS instances provisioned by Crossplane store endpoint details in a single secret.
+This is another place where it feels a little unfinished - for example RDS instances provisioned by Crossplane store endpoint and account details in a single secret.
 
 The cluster endpoint of a MemoryDB cluster called `memorydb-cluster` (the name used in the demo stack) can for example be retrieved using the following command:
 > `kubectl get cluster.memorydb.aws.upbound.io/memorydb-cluster -o json | jq -r '.status.atProvider.clusterEndpoint[].address'`
 
 ## Backups
-MemoryDB has fairly basic backup - automatic snapshots that are taken once every 24 hours and can be retained for up to 35 day, and manual backups that can be retained for as long as required. There does not appear to be any form of so called point-in-time-recovery available.
+MemoryDB has fairly basic backup - automatic snapshots that are taken once every 24 hours and can be retained for up to 35 days, and manual backups that can be retained for as long as required. There does not appear to be any form of so called point-in-time-recovery available.
 
 For the demo stack, automated backups are enabled and retention is set to 7 days.
 
@@ -100,7 +100,7 @@ Updating an access string for a user is simple - just update the manifest and re
 Changing passwords is a little more complicated as updating the secret does not trigger a reconciliation (which makes sense as it's not part of a Crossplane object). Instead you can use two key/value pairs in a secret and update the user object to point from one password entry to another - the Kubernetes Secret manifest in the demo stack created by the script has two password entries as it was used to verify password rotation. Updating the password reference value in the user manifest will trigger reconciliation and an update of the user's password value.
 
 ### Delete a user
-Delete the entry for that user from any ACL that is using it before deleting the user object.
+Delete the entry for that user from any ACL that is using it before deleting the user object otherwise Crossplane will generate error messages when it tries to reconcile with a non-existant object.
 
 
 
