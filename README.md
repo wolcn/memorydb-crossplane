@@ -2,7 +2,7 @@
 
 **MemoryDB** is AWS' own variant of **Redis** optimised for use as a database (**Elasticache** is for caching). Up until relatively recently Crossplane did not support the full MemoryDB stack, but that has now been fixed. It is still a little rough around the edges, but nothing that can't be managed easily.
 
-AWS' own FAQ for MemoryDB, including a short discussion on differences with Elasticache can be found [here](https://aws.amazon.com/memorydb/faqs/).
+AWS' own FAQ for MemoryDB, including a short discussion on differences with Elasticache can be found [here](https://aws.amazon.com/memorydb/faqs/)
 
 The user management described here is AWS' version of the built-in Redis user management, which is likely to be what is currently used on premises. IAM-based user management is also available and could be worth investigating in the future if time becomes available.
 
@@ -14,11 +14,11 @@ The script searches for the `default` VPC in the specified AWS Region and uses t
 
 ### Demo stack
 
-This stack was was developed and verified using AWS EKS running Kubernetes 1.29, Upbound Crossplane AWS providers v1.4.0 on a laptop running Ubuntu 24.04. The bash version was 5.2.21. 
+This stack was was developed and verified using AWS EKS running Kubernetes 1.29, Upbound Crossplane AWS providers v1.4.0 on a laptop running Ubuntu 24.04. The bash version was 5.2.21.
 
 Manifests for the demo stack are created using the bash script `create_stack.sh`, using the currently active AWS credentials. These manifests can then be deployed to provision the demo stack.
 
-In addition to the AWS cli client, the script uses the `jq` JSON processer to deal with output from the AWS client so that needs to be installed. 
+In addition to the AWS cli client, the script uses the `jq` JSON processer to deal with output from the AWS client so that needs to be installed.
 
 Various values in the beginning of the script, such as AWS Region, need to be updated (or at least checked). The script checks for access to an AWS account and bails out if it fails, but no check for Crossplane components is done as these are not needed by the script.
 
@@ -43,7 +43,7 @@ Manifests 5, 6 and 7 are slightly more complicated, but first the relationships 
 * User object definitions get passwords from Kubernetes Secrets
 
 From a deployment perspective, cluster objects reference ACL objects, ACL objects reference user objects and user object reference Secrets.
- 
+
 **5**\
 A user needs to have a Secret with the password of 16-128 characters available as per the documentation. Each user has a so-called *access string* which defines access permissions. An example of such a string is `on ~* &* +@all`, which is the default 'allow everything' rule. This is probably not what we want; application developers and/or owners should be able provide the settings they want as it's likely they have something they are already using. Access permissions are defined per user, so there should not be any issues with multiple applications sharing a single MemoryDB instance.
 
@@ -95,7 +95,7 @@ As ACLs are nothing more than a list of existing user objects which are to have 
 Create new user objects, including password secrets and access strings, then assign them to ACLs. Access will be granted to new users on any cluster that is using an ACL that includes those users.
 
 ### Update a user
-Updating an access string for a user is simple - just update the manifest and redeploy. 
+Updating an access string for a user is simple - just update the manifest and redeploy.
 
 Changing passwords is a little more complicated as updating the secret does not trigger a reconciliation (which makes sense as it's not part of a Crossplane object). Instead you can use two key/value pairs in a secret and update the user object to point from one password entry to another - the Kubernetes Secret manifest in the demo stack created by the script has two password entries as it was used to verify password rotation. Updating the password reference value in the user manifest will trigger reconciliation and an update of the user's password value.
 
