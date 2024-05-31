@@ -100,7 +100,7 @@ Updating an access string for a user is simple - just update the manifest and re
 Changing passwords is a little more complicated as updating the secret does not trigger a reconciliation (which makes sense as it's not part of a Crossplane object). Instead you can use two key/value pairs in a secret and update the user object to point from one password entry to another - the Kubernetes Secret manifest in the demo stack created by the script has two password entries as it was used to verify password rotation. Updating the password reference value in the user manifest will trigger reconciliation and an update of the user's password value.
 
 ### Delete a user
-Delete the entry for that user from any ACL that is using it before deleting the user object otherwise Crossplane will generate error messages when it tries to reconcile with a non-existant object.
+Delete the entry for that user from any ACL that is using it before deleting the user object otherwise Crossplane will generate error messages when it tries to reconcile with a non-existent object.
 
 
 
