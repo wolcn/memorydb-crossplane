@@ -39,29 +39,29 @@ The example parameter group includes a setting for safe eviction of stale keys -
 Manifests 5, 6 and 7 are slightly more complicated, but first the relationships between the different component objects; incorrect or missing relationships will cause errors of different kinds.
 
 * Cluster object definitions have references to security groups, subnet groups, parameter groups and ACLs
-* ACL object definitions include users, but can also be empty without any users
+* ACL object definitions list users, but can also be empty without any users
 * User object definitions get passwords from Kubernetes Secrets
 
-From a deployment perspective, cluster objects reference ACL objects, ACL objects reference user objects and user object reference Secrets.
+From a deployment perspective, cluster objects reference ACL objects, ACL objects reference user objects and user objects reference Secrets.
 
 **5**\
-A user needs to have a Secret with the password of 16-128 characters available as per the documentation. Each user has a so-called *access string* which defines access permissions. An example of such a string is `on ~* &* +@all`, which is the default 'allow everything' rule. This is probably not what we want; application developers and/or owners should be able provide the settings they want as it's likely they have something they are already using. Access permissions are defined per user, so there should not be any issues with multiple applications sharing a single MemoryDB instance.
+A user needs to have a Secret with the password of 16-128 characters available as per the documentation. Each user has a so-called *access string* which defines access permissions. An example of such a string is `on ~* &* +@all`, which is the default 'allow everything' rule. This is probably not best practice; application developers and/or owners should be able provide the settings they want as it's likely they have something they are already using. Access permissions are defined per user, so there should not be any issues with multiple applications sharing a single MemoryDB instance through an ACL (only one ACL is permitted per cluster).
 
 A connection secret can be saved, but only contains the user password - no endpoint or other details - so it seems to be a 'work in progress'.
 
 **6**\
-ACL object definitions can be 'empty' - as in without any users - but cannot refer to non-existent users as reconciliation will generate a lot of error messages. Multiple users can be included in a single ACL.
+ACL object definitions can be 'empty' - as in without any users - but cannot refer to non-existent users as reconciliation will generate a lot of error messages. Multiple users can be included in a single ACL or none at all.
 
 There is a option to save a connection secret here also, but nothing happens so this too appears to be a work in progress.
 
 **7**\
-Clusters do not need to have security groups, subnet groups, parameter groups or ACLs defined - default subnet groups, parameter groups and ACLs will be used if these are not defined while the cluster will be created without a security group; what will cause errors during reconciliation is referring to non-existent objects.
+Cluster manifests do not need to have security groups, subnet groups, parameter groups or ACLs defined - default subnet groups, parameter groups and ACLs will be used if these are not defined while the cluster will be created without a security group; what will cause errors during reconciliation is referring to non-existent objects.
 
-The default ACL is called `openAccess` and provides unrestricted access, which is probably not a good idea even in a devolopment environment.
+The default ACL is called `openAccess` and provides unrestricted access, which is probably not a good idea even in a development environment.
 
 The cluster endpoint and ARN values are stored as key/value fields in the status section of the Crossplane Cluster object so will need to be extracted using e.g. `kubectl` and `jq`.
 
-This is another place where it feels a little unfinished - for example RDS instances provisioned by Crossplane store endpoint and account details in a single secret.
+This is another place where it feels a little unfinished - for example RDS instances provisioned by Crossplane store endpoint and account details together in a single secret.
 
 The cluster endpoint of a MemoryDB cluster called `memorydb-cluster` (the name used in the demo stack) can for example be retrieved using the following command:
 > `kubectl get cluster.memorydb.aws.upbound.io/memorydb-cluster -o json | jq -r '.status.atProvider.clusterEndpoint[].address'`
@@ -92,7 +92,7 @@ Otherwise just delete; clusters are the last layer of the stack so can be delete
 As ACLs are nothing more than a list of existing user objects which are to have access to the database that the ACL is assigned to, creation/update/deletion are all relatively easy to handle as long as there are no references to objects that don't exist. This means, for example, that users need to be removed from any ACLs they belong to before being deleted and ACLs need to be removed from any clusters that are using them before ACLs are deleted.
 
 ### Add a new user
-Create new user objects, including password secrets and access strings, then assign them to ACLs. Access will be granted to new users on any cluster that is using an ACL that includes those users.
+Create new user objects, including password secrets and access strings, then assign them to existing ACLs. Access will be granted to new users on any cluster that is using an ACL that includes those users.
 
 ### Update a user
 Updating an access string for a user is simple - just update the manifest and redeploy.
